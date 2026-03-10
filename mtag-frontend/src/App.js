@@ -42,7 +42,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://119.159.147.162:5000/api";
 
 function App() {
   const [centers, setCenters] = useState([]);
