@@ -41,7 +41,6 @@ import {
   Hotel,
   ShoppingBag,
 } from "lucide-react";
-
 const API_URL =
   process.env.REACT_APP_API_URL || "http://119.159.147.162:5000/api";
 

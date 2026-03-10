@@ -5,25 +5,56 @@ const sqlite3 = require("sqlite3").verbose();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://119.159.147.162:3000",
-      "http://192.168.0.0/24", // Aapke local network ka IP range
-      "http://127.0.0.1:3000",
-    ],
-    credentials: true,
-  }),
-);
-app.options("/*", cors());
+// More permissive CORS for development
+const corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://119.159.147.162:3000",
+    "http://127.0.0.1:3000",
+    // Add your network IP without protocol if needed
+    "http://192.168.1.100:3000", // Add your local network IP if applicable
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Access-Control-Allow-Private-Network"],
+};
+
+// Handle preflight requests properly
+app.options("*", (req, res) => {
+  // Set CORS headers
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  // Critical: Allow private network access
+  if (req.headers["access-control-request-private-network"] === "true") {
+    res.header("Access-Control-Allow-Private-Network", "true");
+  }
+
+  res.sendStatus(204);
+});
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Additional middleware for all requests
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (corsOptions.origin.includes(origin) || !origin) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+    res.header("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Always set this header for requests that need it
+  if (req.headers["access-control-request-private-network"] === "true") {
+    res.header("Access-Control-Allow-Private-Network", "true");
+  }
+
+  next();
+});
+
 app.use(express.json());
 
 const db = new sqlite3.Database("./database.sqlite");
